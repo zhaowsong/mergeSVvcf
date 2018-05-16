@@ -1,4 +1,4 @@
-import vcf
+import pysam
 import mergesvvcf.variantdict as variantdict
 
 def mapped_to_chromosome(chrom):
@@ -29,8 +29,8 @@ def make_info_dict(records, pos1, pos2):
     for field in fields:
         answers = []
         for record in records:
-            if field in record.INFO:
-                answers.append(int_if_possible(record.INFO[field]))
+            if field in record.info:
+                answers.append(int_if_possible(record.info[field]))
         nanswers = len(answers)
         if nanswers > 0:
             sorted_answers = sorted(answers)
@@ -75,7 +75,7 @@ def merge(filenames, programs, forceSV, outfile, slop=0, verbose=True,
     # Returns true if the variant is PASS in the VCF file
     def passed_variant(record):
         """Did this variant pass?"""
-        return record.FILTER is None or len(record.FILTER) == 0 or noFilter
+        return "PASS" in list(record.filter) or len(list(record.filter)) == 0 or noFilter
 
     def infoString(callers, infodict):
         """
@@ -98,13 +98,13 @@ def merge(filenames, programs, forceSV, outfile, slop=0, verbose=True,
     for (infile, program) in zip(filenames, programs):
         count = 0
         try:
-            vcf_reader = vcf.Reader(open(infile, 'r'))
-            for record in vcf_reader:
+            vcf_reader = pysam.VariantFile(infile)
+            for record in vcf_reader.fetch():
 
                 if not passed_variant(record):
                     continue
 
-                if filterByChromosome and not mapped_to_chromosome(record.CHROM):
+                if filterByChromosome and not mapped_to_chromosome(record.chrom):
                     continue
 
                 if verbose:
@@ -169,7 +169,7 @@ def readMergedCalls(infile, filterByChromosome=True, readINFO=False, skipcallers
         - dictionary: caller name -> caller idx
         - callsets(list of lists): [calleridx][callidx]
         - calls: callidx -> record from merged"""
-    invcf = vcf.Reader(infile)
+    invcf = pysam.VariantFile(infile)
     callerIdx = 0
     callIdx = 0
     callsets = []
@@ -179,11 +179,11 @@ def readMergedCalls(infile, filterByChromosome=True, readINFO=False, skipcallers
     if skipcallers is None:
         skipcallers = []
 
-    for rec in invcf:
+    for rec in invcf.fetch():
         ncalledthis = 0
-        if filterByChromosome and not mapped_to_chromosome(rec.CHROM):
+        if filterByChromosome and not mapped_to_chromosome(rec.chrom):
             continue
-        callers = [c for c in rec.INFO['Callers'] if not c in skipcallers]
+        callers = [c for c in rec.info['Callers'] if not c in skipcallers]
         called = []
         for caller in callers:
             if not (caller in called) and not (caller in skipcallers):
@@ -199,9 +199,9 @@ def readMergedCalls(infile, filterByChromosome=True, readINFO=False, skipcallers
 
         assert len(called) == ncalledthis
         if ncalledthis > 0:
-            chrom = rec.CHROM
-            posstart = rec.POS
-            callIdxToCall.append((len(called), chrom, posstart, str(rec.REF), str(rec.ALT[0]), ",".join(called)))
+            chrom = rec.chrom
+            posstart = rec.pos
+            callIdxToCall.append((len(called), chrom, posstart, str(rec.REF), str(list(rec.alts)[0]), ",".join(called)))
             callIdx += 1
 
     return callerIdxDict, callsets, callIdxToCall

@@ -3,7 +3,7 @@ from __future__ import print_function
 import argparse
 import sys
 import re
-import vcf
+import pysam
 import mergesvvcf.locations as loc
 
 __symbolicRE__ = None
@@ -43,7 +43,7 @@ def otherPosnSymbolic(info):
         res = None
         if name in infodict:
             res = infodict[name]
-            if type(res) is list:
+            if type(res) is list or type(res) is tuple:
                 res = res[0]
         return res
 
@@ -133,28 +133,30 @@ def breakpointsFromRecord(record):
     global __bpRE__
     global __looseendRE__
 
-    chr1, pos1 = stdchrom(record.CHROM), int(record.POS)
+    chr1, pos1 = stdchrom(record.chrom), int(record.pos)
     first = loc.location(chr1, pos1)
 
-    if record.ALT is None:
+    if record.alts is None:
         return [(first, loc.location(None,0,"+",True))]
 
     setupREs()
-    ref = str(record.REF)
+    ref = str(record.ref)
     bkptPairs = []
 
-    for alt in record.ALT:
+    for alt in record.alts:
         if alt is None:
             altstr = "."
         else:
             altstr = str(alt)
 
         # get all available information from the record
-        chr2, pos2, ct, svtype, svlen = otherPosnSymbolic(record.INFO)
+        chr2, pos2, ct, svtype, svlen = otherPosnSymbolic(record.info)
 
         # defaults
         if chr2 is None:
             chr2 = chr1
+        if pos2 is None and "<" in altstr:
+            pos2 = record.stop
 
         # look for symbolic SVTYPE information in the alt field (eg, <DEL>)
         resultSym = re.match(__symbolicRE__, altstr)
@@ -165,14 +167,14 @@ def breakpointsFromRecord(record):
         # (eg, N[chr2:123123[)
         resultBP = re.match(__bpRE__, altstr)
         if resultBP:
-            ct, chr2, pos2, indellen = ctAndLocFromBkpt(str(record.REF), resultBP.group(1),
+            ct, chr2, pos2, indellen = ctAndLocFromBkpt(str(record.ref), resultBP.group(1),
                     resultBP.group(2), resultBP.group(3), resultBP.group(4),
                     resultBP.group(5))
             if svlen is None:
                 svlen = indellen
 
         # looseend; no paired BP
-        resultLE = __looseendRE__.search(str(record.FILTER))
+        resultLE = __looseendRE__.search(str(record.filter))
         if altstr == ref+"." or resultLE:
             chr2 = None; pos2 = 0
             if ct is None:
@@ -240,9 +242,9 @@ def vcftobkpts(infile, outfile, width):
     firstbkpts = loc.locationdict(width)
     pairbkpts  = loc.locationdict(width)
 
-    reader = vcf.Reader(infile)
-    for record in reader:
-        if record.FILTER == "PASS" or record.FILTER == "." or record.FILTER is None or (type(record.FILTER) is list and len(record.FILTER) == 0):
+    reader = pysam.VariantFile(infile)
+    for record in reader.fetch():
+        if list(record.filter) is None or "PASS" in list(record.filter) or list(record.filter)[0] == "." or len(list(record.filter)) == 0:
             bkptPairs = breakpointsFromRecord(record)
             for pair in bkptPairs:
                 addBkptToDictDict(pair[0], firstbkpts)
@@ -268,13 +270,13 @@ def vcftobkpts(infile, outfile, width):
         start = pos-width/2
         if start < 0:
             start = 0
-        print("{0}	{1}	{2}".format(chrom, start, pos+width/2), file=outfile)
+        print("{0}	{1}	{2}".format(chrom, int(start), int(pos)+int(width/2)), file=outfile)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('infile', nargs='?', type=argparse.FileType('r'), default=sys.stdin)
+    parser.add_argument('infile', nargs='?', default=sys.stdin)
     parser.add_argument('outfile', nargs='?', type=argparse.FileType('w'), default=sys.stdout)
     defwidth=300
     parser.add_argument('-w','--width', type=int, help="width of breakpoint region: default("+str(defwidth)+")",default=defwidth)

@@ -2,7 +2,7 @@
 Definitions for a dictionary of variants, and operations on them
 """
 from mergesvvcf.locations import locationdict, location
-import vcf
+import pysam
 import mergesvvcf.vcftobreakpoints as svvcf
 
 def __checkvalidpairlocs__(t):
@@ -168,18 +168,18 @@ class variantmap(object):
 
     # forceSV is here to allow forcing a call that looks like a huge indel to be treated as an SV
     def addrecord(self, record, caller="NA", forceSV=False):
-        assert type(record) is vcf.model._Record
+        assert type(record) is pysam.VariantRecord
 
-        if forceSV or (record.ALT is not None and len(record.ALT) > 0 and type(record.ALT[0]) in [vcf.model._SV, vcf.model._Breakend]):
+        if forceSV or len(list(record.alts)) > 0:
             bkptPairs = svvcf.breakpointsFromRecord(record)
             for pair in bkptPairs:
                 self.__setitem__(pair, caller, record)
         else:
-            for alt in record.ALT:
+            for alt in record.alts:
                 if alt is None:
                     continue
-                loc = location(record.CHROM, int(record.POS))
-                allele = (record.REF, str(alt))
+                loc = location(record.chr, int(record.pos))
+                allele = (record.ref, str(alt))
                 self.__setitem__((loc, allele), caller)
 
     def __iter__(self):
