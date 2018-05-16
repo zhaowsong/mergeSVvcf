@@ -1,6 +1,6 @@
 import unittest
-from mergevcf.locations import *
-from mergevcf.variantdict import *
+from mergesvvcf.locations import *
+from mergesvvcf.variantdict import *
 
 class TestLocations(unittest.TestCase):
 

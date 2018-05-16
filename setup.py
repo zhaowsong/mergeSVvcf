@@ -10,11 +10,11 @@ with open(path.join(here, 'DESCRIPTION.rst'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(
-    name='mergevcf',
+    name='mergesvvcf',
 
     version='1.0.1',
 
-    description='Merge VCF calls',
+    description='Merge SV VCF calls',
     long_description=long_description,
 
     # The project's main homepage.
@@ -46,7 +46,7 @@ setup(
 #        'Programming Language :: Python :: 3.4',
     ],
 
-    keywords='merge vcfs',
+    keywords='merge sv vcfs',
 
     packages=find_packages(exclude=['contrib', 'docs', 'tests*']),
 
@@ -68,7 +68,7 @@ setup(
 
     entry_points={
         'console_scripts': [
-            'mergevcf=mergevcf:main',
+            'mergesvvcf=mergesvvcf:main',
         ],
     },
 )

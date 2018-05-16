@@ -1,9 +1,9 @@
 """
 Definitions for a dictionary of variants, and operations on them
 """
-from mergevcf.locations import locationdict, location
+from mergesvvcf.locations import locationdict, location
 import vcf
-import mergevcf.vcftobreakpoints as svvcf
+import mergesvvcf.vcftobreakpoints as svvcf
 
 def __checkvalidpairlocs__(t):
     """
@@ -66,8 +66,8 @@ class variantmap(object):
 
         self.__alleledict = locationdict(awindow)     # map locn -> allele (ref/alt)
         self.__svdict = locationpairdict(svwindow)    # map locn -> locn (for SVs - paired breakpoints)
-        self.__locn1pos = locationpairdict(svwindow)  # map locn -> all the locations found which map to this one 
-        self.__locn2pos = locationpairdict(svwindow)  # map locn -> all the locations found which map to this one 
+        self.__locn1pos = locationpairdict(svwindow)  # map locn -> all the locations found which map to this one
+        self.__locn2pos = locationpairdict(svwindow)  # map locn -> all the locations found which map to this one
         self.__records = locationpairdict(svwindow)   # all the records involving this location
 
     def __medianpos__(self, locn1, locn2):
@@ -158,7 +158,7 @@ class variantmap(object):
             chrom1 = loc1.__chrom__
             for loc2 in self.__svdict[loc1]:
                 chrom2 = loc2.__chrom__
-                pos1, pos2 = self.__medianpos__(loc1, loc2) 
+                pos1, pos2 = self.__medianpos__(loc1, loc2)
                 output+="\t".join([chrom1, str(pos1), '.', 'n', 'n['+chrom2+":"+str(pos2)+'['])
                 output+="\tCallers="+",".join(self.__svdict[loc1][loc2])+"\n"
         return output
@@ -174,7 +174,7 @@ class variantmap(object):
             bkptPairs = svvcf.breakpointsFromRecord(record)
             for pair in bkptPairs:
                 self.__setitem__(pair, caller, record)
-        else: 
+        else:
             for alt in record.ALT:
                 if alt is None:
                     continue

@@ -1,5 +1,5 @@
 import vcf
-import mergevcf.variantdict as variantdict
+import mergesvvcf.variantdict as variantdict
 
 def mapped_to_chromosome(chrom):
     """
@@ -116,7 +116,7 @@ def merge(filenames, programs, forceSV, outfile, slop=0, verbose=True,
 
                 calldict.addrecord(record, program, forceSV)
         except (RuntimeError, TypeError, NameError, AttributeError):
-            pass 
+            pass
     # Write the results in a master vcf file for the sample
 
     outfile.write('##fileformat=VCFv4.1\n')
@@ -203,5 +203,5 @@ def readMergedCalls(infile, filterByChromosome=True, readINFO=False, skipcallers
             posstart = rec.POS
             callIdxToCall.append((len(called), chrom, posstart, str(rec.REF), str(rec.ALT[0]), ",".join(called)))
             callIdx += 1
-    
+
     return callerIdxDict, callsets, callIdxToCall

@@ -1,15 +1,15 @@
-import mergevcf.mergedfile as mergedfile
+import mergesvvcf.mergedfile as mergedfile
 import argparse
 import os
 import sys
 
 def main():
-    """Merge VCF files, output to stdout or file"""
+    """Merge SV VCF files, output to stdout or file"""
     defsvwindow = 100
 
-    parser = argparse.ArgumentParser(description='Merge calls in VCF files')
+    parser = argparse.ArgumentParser(description='Merge calls in SV VCF files')
     parser.add_argument('input_files', nargs='+', help='Input VCF files')
-    parser.add_argument('-o', '--output', type=argparse.FileType('w'), default=sys.stdout, help="Specify output file (default:stdout)") 
+    parser.add_argument('-o', '--output', type=argparse.FileType('w'), default=sys.stdout, help="Specify output file (default:stdout)")
     parser.add_argument('-v', '--verbose', action='store_true', help="Specify verbose output")
     parser.add_argument('-l', '--labels', type=str, help='Comma-separated labels for each input VCF file (default:basenames)')
     parser.add_argument('-n', '--ncallers', action='store_true', help='Annotate variant with number of callers')
