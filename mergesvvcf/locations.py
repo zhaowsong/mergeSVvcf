@@ -17,9 +17,9 @@ class location(object):
 
     def __hash__(self):
         return hash(self.__chrom__) ^ hash(self.__pos__) ^ hash(self.__strand__) ^ hash(self.__right__)
-        
-    def __cmp__(self, other):
-        """Compare location of two positions, regardless of strand or direction."""
+
+    def __lt__(self, other):
+        """(Less than) Compare location of two positions, regardless of strand or direction."""
         def _strsAsIntsIfPossible(str1, str2):
             try:
                 i1 = int(str1)
@@ -29,11 +29,28 @@ class location(object):
             return i1, i2
 
         if other is None:
-            return -1 
+            return -1
         if self.__chrom__ != other.__chrom__:
             ic1, ic2 = _strsAsIntsIfPossible(self.__chrom__, other.__chrom__)
-            return cmp(ic1, ic2)
-        return cmp(self.__pos__, other.__pos__)
+            return ic1 < ic2
+        return self.__pos__ < other.__pos__
+
+    def __eq__(self, other):
+        """(Equal) Compare location of two positions, regardless of strand or direction."""
+        def _strsAsIntsIfPossible(str1, str2):
+            try:
+                i1 = int(str1)
+                i2 = int(str2)
+            except ValueError:
+                return str1, str2
+            return i1, i2
+
+        if other is None:
+            return -1
+        if self.__chrom__ != other.__chrom__:
+            ic1, ic2 = _strsAsIntsIfPossible(self.__chrom__, other.__chrom__)
+            return ic1 == ic2
+        return self.__pos__ == other.__pos__
 
     def overlap(self, other, strandTest=False, window=0):
         """Compare location of two endpoints with the given window, optionally
@@ -90,11 +107,13 @@ class location(object):
 class locationdict(dict):
     def __init__(self, window, *args, **kwargs):
         self.__window = window
-        self.__search = [0] + [item for pm in zip(range(1,window+1),range(-1,-window-1,-1)) for item in pm]
+        self.__search = [0] + [item for pm in zip(list(range(1,window+1)),
+                                                  list(range(-1,-window-1,-1)))
+                                                for item in pm]
         super(locationdict,self).__init__(*args, **kwargs)
 
     def keys(self):
-        return super(locationdict, self).keys()
+        return list(super(locationdict, self).keys())
 
     def values(self):
         return [self[key] for key in self]

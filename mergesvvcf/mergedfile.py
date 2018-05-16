@@ -35,7 +35,7 @@ def make_info_dict(records, pos1, pos2):
         if nanswers > 0:
             sorted_answers = sorted(answers)
             # doesn't quite deal with even #s correctly - can't average strings
-            median_pos = nanswers/2
+            median_pos = int(nanswers / 2)
             median_answer = sorted_answers[median_pos]
             if not median_answer == 0:
                 info[field] = median_answer
@@ -109,7 +109,7 @@ def merge(filenames, programs, forceSV, outfile, slop=0, verbose=True,
 
                 if verbose:
                     if count == 0:
-                        print record, program
+                        print (record, program)
                     count += 1
                     if count == 100:
                         count = 0

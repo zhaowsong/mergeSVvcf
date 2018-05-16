@@ -22,7 +22,7 @@ class TestLocations(unittest.TestCase):
 
     def test_locationdict(self):
         self.assertTrue( self.l4 in self.ld )  # should overlap with l2
-        self.assertTrue( self.ld.__str__() == "{(Y,121): 'baz', (Y,131,-L): '(Y,131,-L)', (X,31): 'foo'}")
+        # self.assertTrue( self.ld.__str__() == "{(Y,121): 'baz', (Y,131,-L): '(Y,131,-L)', (X,31): 'foo'}") # str method of dict is not deterministic!
         self.assertTrue( self.ld[self.l4].__str__() == "(Y,131,-L)")
         self.assertTrue( self.l3 in self.ld )
         self.assertTrue( self.l2 in self.ld )

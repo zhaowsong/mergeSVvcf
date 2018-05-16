@@ -37,10 +37,10 @@ class locationpairdict(object):
         if not __checkvalidpairlocs__(lpair):
             raise KeyError("Required: tuple of locations")
         if not self.__contains__(lpair):
-            raise KeyError("Not in location pair dicti")
+            raise KeyError("Not in location pair dict")
 
         locn1 = lpair[0]; locn2 = lpair[1]
-        return self.__lpdict[locn1][locn2]
+        return self.__lpdict[locn1].get(locn2)
 
     def __setitem__(self, lpair, entry):
         if not __checkvalidpairlocs__(lpair):
@@ -54,7 +54,7 @@ class locationpairdict(object):
         self.__lpdict[locn1][locn2].append(entry)
 
     def keys(self):
-        return self.__lpdict.keys()
+        return list(self.__lpdict.keys())
 
     def __iter__(self):
         return self.__lpdict.__iter__()

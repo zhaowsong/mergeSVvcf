@@ -4,7 +4,7 @@ import argparse
 import sys
 import re
 import vcf
-import locations as loc
+import mergesvvcf.locations as loc
 
 __symbolicRE__ = None
 __bpRE__ = None
@@ -29,7 +29,7 @@ def orderBreakpoints(loc1, loc2):
     # already ordered?  Just return them
     if loc1 < loc2:
         return loc1, loc2
-    
+
     # Otherwise, swap and either flip strands (if different) or extents
     first, second = loc2, loc1
     if first.isRC():
@@ -84,7 +84,7 @@ def ctAndLocFromBkpt(ref, pre, delim1, pair, delim2, post):
     connectSeq = ""
 
     if len(pre) > 0:
-        connectSeq = pre 
+        connectSeq = pre
         joinedAfter = True
         assert len(post) == 0
     elif len(post) > 0:
@@ -108,7 +108,7 @@ def ctAndLocFromBkpt(ref, pre, delim1, pair, delim2, post):
             ct = '5to5'
         else:
             ct = '5to3'
-    
+
     return ct, chr2, pos2, indellen
 
 def translocation(chr1, pos1, chr2, pos2, ct):
@@ -124,7 +124,7 @@ def translocation(chr1, pos1, chr2, pos2, ct):
     elif ct == '3to3':
         firstExtendRight =False; secondExtendRight =False; secondStrand = '-'
 
-    return ( loc.location(chr1, pos1, "+",          firstExtendRight), 
+    return ( loc.location(chr1, pos1, "+",          firstExtendRight),
              loc.location(chr2, pos2, secondStrand, secondExtendRight) )
 
 def breakpointsFromRecord(record):
@@ -149,7 +149,7 @@ def breakpointsFromRecord(record):
         else:
             altstr = str(alt)
 
-        # get all available information from the record 
+        # get all available information from the record
         chr2, pos2, ct, svtype, svlen = otherPosnSymbolic(record.INFO)
 
         # defaults
@@ -161,7 +161,7 @@ def breakpointsFromRecord(record):
         if resultSym:
             svtype = resultSym.group(1)
 
-        # explicit BP - look for chr2 and CT information from the alt field 
+        # explicit BP - look for chr2 and CT information from the alt field
         # (eg, N[chr2:123123[)
         resultBP = re.match(__bpRE__, altstr)
         if resultBP:
@@ -182,9 +182,9 @@ def breakpointsFromRecord(record):
             if ct is None:
                 ct = '3to5'
 
-        # if nothing else, treat as an indel 
+        # if nothing else, treat as an indel
         if not svtype and not resultBP and not resultLE and not resultSym:
-            reflen = len(ref)  
+            reflen = len(ref)
             if pos2 is None:
                 pos2 = pos1 + reflen
             if svlen is None:
@@ -194,7 +194,7 @@ def breakpointsFromRecord(record):
                     svtype = 'INS'
                 else:
                     svtype = 'DEL'
-        
+
         if svtype == "INV":
             assert chr1 == chr2
             bkptPairs.append( translocation(chr1, pos1,   chr1, pos2-1, '3to3') )
