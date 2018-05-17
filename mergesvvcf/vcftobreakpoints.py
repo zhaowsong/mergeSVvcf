@@ -16,7 +16,7 @@ def setupREs():
     global __looseendRE__
     if __symbolicRE__ is None or __bpRE__ is None or __looseendRE__ is None:
         __symbolicRE__ = re.compile(r'.*<([A-Z:]+)>.*')
-        __bpRE__ = re.compile(r'([ACGTNactgn\.]*)([\[\]])([a-zA-Z0-9\.]+:\d+)([\[\]])([ACGTNacgtn\.]*)')
+        __bpRE__ = re.compile(r'([ACGTNactgn\.]*)([\[\]])([a-zA-Z0-9_\.]+:\d+)([\[\]])([ACGTNacgtn\.]*)')
         __looseendRE__ = re.compile(r'[lL][oO][oO][sS][eE][eE][nN][dD]')
 
 def stdchrom(chrom):
@@ -199,8 +199,10 @@ def breakpointsFromRecord(record):
 
         if svtype == "INV":
             assert chr1 == chr2
-            bkptPairs.append( translocation(chr1, pos1,   chr1, pos2-1, '3to3') )
-            bkptPairs.append( translocation(chr1, pos1+1, chr1, pos2,   '5to5') )
+            # Only one version of INV reporting
+            bkptPairs.append(translocation(chr1, pos1, chr1, pos2, ct))
+            # bkptPairs.append( translocation(chr1, pos1,   chr1, pos2-1, '3to3') )
+            # bkptPairs.append( translocation(chr1, pos1+1, chr1, pos2,   '5to5') )
         elif svtype in ["DUP:TANDEM","DUP"]:
             if chr2 is None:
                 chr2 = chr1

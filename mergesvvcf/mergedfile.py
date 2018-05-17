@@ -8,7 +8,7 @@ def mapped_to_chromosome(chrom):
     Returns true if mapped to, eg, chr1 or X;
     false if mapped to other contig, eg GL*, MT*, hs*, M*
     """
-    if chrom[0:2] in ["GL", "MT", "hs"] or chrom[0:1] == "M":
+    if chrom[0:2] in ["GL", "MT", "hs", "NC"] or chrom[0:1] == "M":
         return False
     return True
 

@@ -12,7 +12,7 @@ with open(path.join(here, 'DESCRIPTION.rst'), encoding='utf-8') as f:
 setup(
     name='mergesvvcf',
 
-    version='1.0.1',
+    version='2.0.0',
 
     description='Merge SV VCF calls',
     long_description=long_description,
