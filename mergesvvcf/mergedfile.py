@@ -1,3 +1,5 @@
+from __future__ import print_function
+import os
 import pysam
 import mergesvvcf.variantdict as variantdict
 
@@ -69,8 +71,12 @@ def bkptRefAltFromPair(loc1, loc2, refstr="N"):
 
 def merge(filenames, programs, forceSV, outfile, slop=0, verbose=True,
         output_ncallers=False, min_num_callers=0,
-        filterByChromosome=True, noFilter=False):
+        filterByChromosome=True, noFilter=False, debug=False):
     """Merge several VCFs from different programs into a new VCF file."""
+
+    outvcf = pysam.VariantFile(os.devnull, 'w')
+    if min_num_callers > 0:
+        outvcf.header.filters.add("LOWSUPPORT", None, None, "Not called by enough callers in ensemble")
 
     # Returns true if the variant is PASS in the VCF file
     def passed_variant(record):
@@ -82,23 +88,31 @@ def merge(filenames, programs, forceSV, outfile, slop=0, verbose=True,
         Generate an INFO string from the INFO dictionary plus
         the list of callers.
         """
-        infostring = ""
-        fields = ['CHR2', 'END', 'SVTYPE', 'SVLEN']
+        info = {}
+        fields = ['SVTYPE', 'SVLEN']
         for field in fields:
             if field in infodict:
                 res = infodict[field]
                 if type(res) is list:
                     res = res[0]
-                infostring = infostring + ';'+field+'='+str(res)
+                info[field] = str(res)
         if output_ncallers:
-            infostring = infostring + ";NumCallers=" + str(len(callers))
-        return "Callers="+",".join(list(set(callers)))+infostring
+            info["NumCallers"] = int(len(set(callers)))
+        info["Callers"] = ",".join(list(set(callers)))
+        return info
 
     calldict = variantdict.variantmap(awindow=0, svwindow=slop)
     for (infile, program) in zip(filenames, programs):
         count = 0
         try:
             vcf_reader = pysam.VariantFile(infile)
+
+            for contig in sorted(vcf_reader.header.contigs):
+                try:
+                    outvcf.header.contigs.add(contig)
+                except ValueError:
+                    pass
+
             for record in vcf_reader.fetch():
 
                 if not passed_variant(record):
@@ -109,25 +123,38 @@ def merge(filenames, programs, forceSV, outfile, slop=0, verbose=True,
 
                 if verbose:
                     if count == 0:
-                        print (record, program)
+                        print(record, program)
                     count += 1
                     if count == 100:
                         count = 0
 
                 calldict.addrecord(record, program, forceSV)
-        except (RuntimeError, TypeError, NameError, AttributeError):
-            pass
+        except (RuntimeError, TypeError, NameError, AttributeError) as e:
+            if debug:
+                raise(e)
+            else:
+                pass
+
+        outvcf.header.add_meta(
+            key="caller",
+            items=[
+                ("ID", program),
+                ("File", infile)
+                ]
+        )
+
     # Write the results in a master vcf file for the sample
+    outvcf.header.info.add("Callers", ".", "String", "Callers that made this call")
 
-    outfile.write('##fileformat=VCFv4.1\n')
-    outfile.write('##INFO=<ID=Callers,Number=.,Type=String,Description="Callers that made this call">\n')
     if output_ncallers:
-        outfile.write('##INFO=<ID=NumCallers,Number=1,Type=Integer,Description="Number of callers that made this call">\n')
-    if min_num_callers > 0:
-        outfile.write('##FILTER=<ID=LOWSUPPORT,Description="Not called by enough callers in ensemble">\n')
-    outfile.write("#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n")
+        outvcf.header.info.add("NumCallers", 1, "Integer", "Number of callers that made this call")
 
-    for variant in calldict:
+    outvcf.header.info.add("SVTYPE", "1", "String", "Type of structural variant")
+    outvcf.header.info.add("SVLEN", "1", "String", "Length of structural variant")
+
+    print(outvcf.header, end="", file=outfile)
+
+    for variant in sorted(calldict):
         callers = variant[2]
         num_callers = len(set(callers))
         passes = num_callers >= min_num_callers
@@ -139,12 +166,16 @@ def merge(filenames, programs, forceSV, outfile, slop=0, verbose=True,
                 print("Allele is none: loc, allele, callers = ", loc, allele, callers)
                 continue
             chrom, pos, _, _ = loc.asTuple()
-            vcfline = "\t".join([chrom, str(pos), ".", allele[0], allele[1],
-                                 ".", filterstring,
-                                 "Callers=" + ",".join(callers)])
+            vcfrec = outvcf.new_record()
+            vcfrec.contig = chrom
+            vcfrec.start = pos
+            vcfrec.ref = allele[0]
+            vcfrec.alts = [allele[1]]
+            vcfrec.filter.add(filterstring)
+            vcfrec.info.__setitem__("Callers", ",".join(callers))
             if output_ncallers:
-                vcfline += ";NumCallers="+str(len(set(callers)))
-            outfile.write(vcfline + "\n")
+                vcfrec.info.__setitem__("NumCallers", str(len(set(callers))))
+            print(vcfrec, end="", file=outfile)
         else:
             loc1, loc2, callers, medianPos1, medianPos2, recordscalled = variant
             if filterByChromosome and not mapped_to_chromosome(loc2.chrom):
@@ -155,14 +186,21 @@ def merge(filenames, programs, forceSV, outfile, slop=0, verbose=True,
             avgloc1 = loc1.withPos(medianPos1)
             avgloc2 = loc2.withPos(medianPos2)
             ref, alt = bkptRefAltFromPair(avgloc1, avgloc2)
-            vcfline = "\t".join([avgloc1.__chrom__, str(avgloc1.__pos__), '.',
-                ref, alt, '.', filterstring,
-                infoString(callers, make_info_dict(records, medianPos1, medianPos2))])
-            outfile.write(vcfline + "\n")
-            for caller, rec in recordscalled:
-                outfile.write("#"+str(rec)+" ("+caller+")\n")
+            vcfrec = outvcf.new_record()
+            vcfrec.contig = avgloc1.__chrom__
+            vcfrec.start = avgloc1.__pos__
+            vcfrec.ref = ref
+            vcfrec.alts = [alt]
+            vcfrec.filter.add(filterstring)
+            for key, val in sorted(infoString(callers, make_info_dict(records, medianPos1, medianPos2)).items()):
+                vcfrec.info.__setitem__(key, val)
+            print(vcfrec, end="", file=outfile)
 
-    outfile.close()
+            if debug:
+                for caller, rec in recordscalled:
+                    print("#" + str(rec).rstrip() + " ("+caller+")", file=outfile)
+
+    outvcf.close()
 
 def readMergedCalls(infile, filterByChromosome=True, readINFO=False, skipcallers=None):
     """Read a merged callset, and return:

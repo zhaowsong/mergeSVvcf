@@ -18,6 +18,8 @@ def main():
     parser.add_argument('-f', '--filtered', action='store_true', help='Include records that have failed one or more filters (default:false)')
     parser.add_argument('-w', '--svwindow', default=defsvwindow, type=int,
                          help='Window for comparing breakpoint positions for SVs (default:'+str(defsvwindow)+')')
+    parser.add_argument('-d', '--debug', action=('store_true'),
+                         help='Include original reads and raise errors (default:false)')
 
     args = parser.parse_args()
     input_files = args.input_files
@@ -30,4 +32,5 @@ def main():
                      slop=args.svwindow, verbose=args.verbose,
                      output_ncallers=args.ncallers,
                      min_num_callers=args.mincallers,
-                     filterByChromosome=True, noFilter=args.filtered)
+                     filterByChromosome=True, noFilter=args.filtered,
+                     debug=args.debug)
