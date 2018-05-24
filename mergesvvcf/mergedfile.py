@@ -16,7 +16,7 @@ def int_if_possible(val):
     """
     Returns integer value of s if conversion succeeds, else s.
     """
-    if type(val) is list:
+    if type(val) is list or type(val) is tuple:
         val = val[0]
     try:
         i = int(val)
@@ -68,6 +68,23 @@ def bkptRefAltFromPair(loc1, loc2, refstr="N"):
 
     return refstr, altstr
 
+def getSVTYPE(chr1, chr2, extend1, extend2):
+    """Get SVTYPE from extend right"""
+    if chr1 != chr2:
+        return "TRA"
+
+    eventmap = {
+        True:{
+            True:"INV",
+            False:"DUP"
+        },
+        False:{
+            True:"DEL",
+            False:"INV"
+        }
+    }
+
+    return eventmap[extend1][extend2]
 
 def merge(filenames, programs, forceSV, outfile, slop=0, verbose=True,
         output_ncallers=False, min_num_callers=0,
@@ -168,7 +185,7 @@ def merge(filenames, programs, forceSV, outfile, slop=0, verbose=True,
             chrom, pos, _, _ = loc.asTuple()
             vcfrec = outvcf.new_record()
             vcfrec.contig = chrom
-            vcfrec.start = pos
+            vcfrec.pos = pos
             vcfrec.ref = allele[0]
             vcfrec.alts = [allele[1]]
             vcfrec.filter.add(filterstring)
@@ -185,17 +202,21 @@ def merge(filenames, programs, forceSV, outfile, slop=0, verbose=True,
 
             avgloc1 = loc1.withPos(medianPos1)
             avgloc2 = loc2.withPos(medianPos2)
+            extend1, extend2= avgloc1.__right__, avgloc2.__right__
             ref, alt = bkptRefAltFromPair(avgloc1, avgloc2)
             vcfrec = outvcf.new_record()
-            vcfrec.contig = avgloc1.__chrom__
-            vcfrec.start = avgloc1.__pos__
+            vcfrec.contig = avgloc1.chrom
+            vcfrec.pos = avgloc1.pos
             vcfrec.ref = ref
             vcfrec.alts = [alt]
             vcfrec.filter.add(filterstring)
             for key, val in sorted(infoString(callers, make_info_dict(records, medianPos1, medianPos2)).items()):
                 vcfrec.info.__setitem__(key, val)
+            svtype = getSVTYPE(avgloc1.chrom, avgloc2.chrom, extend1, extend2)
+            vcfrec.info.__setitem__("SVTYPE", svtype)
+            if avgloc1.chrom == avgloc2.chrom:
+                vcfrec.info.__setitem__("SVLEN", str(avgloc2.pos - avgloc1.pos))
             print(vcfrec, end="", file=outfile)
-
             if debug:
                 for caller, rec in recordscalled:
                     print("#" + str(rec).rstrip() + " ("+caller+")", file=outfile)

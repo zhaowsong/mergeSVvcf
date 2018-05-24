@@ -222,9 +222,9 @@ def breakpointsFromRecord(record):
             # translocation is the default
             if ct is None:
                 ct = "3to5"
-            if (svtype is not None) and (not svtype in ["TRA","BND"]):
-                print("Got unknown record of type", svtype, altstr, str(record), file=sys.stderr)
-                print("Hoping for best",file=sys.stderr)
+            # if (svtype is not None) and (not svtype in ["TRA","BND"]):
+            #     print("Got unknown record of type", svtype, altstr, str(record), file=sys.stderr)
+            #     print("Hoping for best",file=sys.stderr)
             bkptPairs.append( translocation(chr1, pos1, chr2, pos2, ct) )
 
     orderedPairs = [orderBreakpoints(bp1,bp2) for bp1,bp2 in bkptPairs]
