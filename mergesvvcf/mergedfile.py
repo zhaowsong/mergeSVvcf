@@ -1,5 +1,6 @@
 from __future__ import print_function
 import os
+import operator
 import pysam
 import mergesvvcf.variantdict as variantdict
 
@@ -171,7 +172,7 @@ def merge(filenames, programs, forceSV, outfile, slop=0, verbose=True,
 
     print(outvcf.header, end="", file=outfile)
 
-    for variant in sorted(calldict):
+    for variant in sorted(calldict, key=operator.itemgetter(0)):
         callers = variant[2]
         num_callers = len(set(callers))
         passes = num_callers >= min_num_callers
