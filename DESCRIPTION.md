@@ -1,5 +1,5 @@
-Merge SV VCFs
-==========
+# Merge SV VCFs
+
 
 This set of routines merges SV VCF files by calls, labeling calls by the callers that
 made them in an INFO field, Callers=.   Most of the work goes into normalizing
