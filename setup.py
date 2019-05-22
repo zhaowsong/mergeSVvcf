@@ -37,22 +37,14 @@ setup(
         'License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)',
 
         'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.6',
-        'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 2.8',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.2',
-        'Programming Language :: Python :: 3.3',
-        'Programming Language :: Python :: 3.4',
-        'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6',
     ],
 
     keywords='merge sv vcfs',
 
     packages=find_packages(exclude=['contrib', 'docs', 'tests*']),
 
-    install_requires=['pysam','Cython'],
+    install_requires=['pysam>=0.15.2','Cython>=0.29.7'],
 
     test_suite='tests',
 
