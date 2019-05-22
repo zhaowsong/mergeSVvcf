@@ -12,17 +12,17 @@ with open(path.join(here, 'DESCRIPTION.rst'), encoding='utf-8') as f:
 setup(
     name='mergesvvcf',
 
-    version='2.0.0',
+    version='1.0.0',
 
-    description='Merge SV VCF calls',
+    description='Merge SV VCF calls. Fork of https://github.com/ljdursi/mergevcf by Jonathan Dursi (Jonathan.Dursi@oicr.on.ca)',
     long_description=long_description,
 
     # The project's main homepage.
-    url='https://github.com/ljdursi/mergevcf',
+    url='https://github.com/papaemmelab/mergeSVvcf',
 
     # Author details
-    author='Jonathan Dursi',
-    author_email='Jonathan.Dursi@oicr.on.ca',
+    author='Max Levine',
+    author_email='levinem1@mskcc.org',
 
     # Choose your license
     license='GPL',
