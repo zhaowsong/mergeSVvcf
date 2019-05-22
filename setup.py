@@ -12,7 +12,7 @@ with open(path.join(here, 'DESCRIPTION.md'), encoding='utf-8') as f:
 setup(
     name='mergesvvcf',
 
-    version='1.0.0',
+    version='1.0.1',
 
     description='Merge SV VCF calls. Fork of https://github.com/ljdursi/mergevcf by Jonathan Dursi (Jonathan.Dursi@oicr.on.ca)',
     long_description=long_description,
