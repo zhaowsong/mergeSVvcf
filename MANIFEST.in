@@ -4,5 +4,5 @@ include DESCRIPTION.rst
 # it's already declared in setup.py
 include sample/*.dat
 
-# include cython files in ackage
+# include cython files in package
 global-include *.pyx
