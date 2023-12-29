@@ -307,9 +307,12 @@ def merge(
             extend1, extend2 = avgloc1.__right__, avgloc2.__right__
             ref, alt = bkptRefAltFromPair(avgloc1, avgloc2)
             vcfrec = outvcf.new_record()
-            vcfrec.contig = avgloc1.chrom
-            vcfrec.pos = avgloc1.pos
-            vcfrec.ref = ref
+            try:
+                vcfrec.contig = avgloc1.chrom
+                vcfrec.pos = avgloc1.pos
+                vcfrec.ref = ref
+            except:
+                continue
             vcfrec.alts = [alt]
             vcfrec.filter.add(filterstring)
             # for key, val in sorted(infoString(callers, make_info_dict(callers, records, medianPos1, medianPos2)).items()):
