@@ -191,6 +191,5 @@ class variantmap(object):
                 for loc2 in self.__svdict[loc1]:
                     pos1, pos2 = self.__medianpos__(loc1, loc2)
                     yield loc1, loc2, self.__svdict[loc1][loc2], pos1, pos2, self.__records[(loc1,loc2)]
-            raise StopIteration()
 
         return generatorIterator()
